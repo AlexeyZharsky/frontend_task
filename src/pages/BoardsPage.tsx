@@ -1,16 +1,12 @@
 import { useState } from "react";
 import BoardCard from "../components/board/BoardCard";
 import CreateBoardForm from "../components/board/CreateBoardForm";
+import Header from "../components/shared/Header";
 import { useBoards } from "../hooks/useBoards";
-import { useAuth } from "../providers/AuthProvider";
-import { signOut } from "../services/auth.service";
 
 const BoardsPage = () => {
-  const { user } = useAuth();
-
   const { boards, isLoading, error, addBoard, removeBoard } = useBoards();
 
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const handleCreateBoard = async (title: string) => {
@@ -37,40 +33,9 @@ const BoardsPage = () => {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-
-      await signOut();
-    } catch (error) {
-      setActionError(
-        error instanceof Error ? error.message : "Не удалось выйти из аккаунта",
-      );
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
   return (
     <main className="min-h-screen bg-zinc-100">
-      <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
-          <h1 className="text-xl font-bold text-zinc-900">TaskFlow</h1>
-
-          <div className="flex items-center gap-3">
-            {user?.email}
-
-            <button
-              type="button"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2"
-            >
-              Выйти
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <div className="mx-auto max-w-7xl px-4 py-8">
         <section>
