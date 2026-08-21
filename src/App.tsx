@@ -3,6 +3,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import BoardPage from "./pages/BoardPage";
 import BoardsPage from "./pages/BoardsPage";
 import LoginPage from "./pages/LoginPage";
+import ProfilePage from "./pages/ProfilePage";
 import RegisterPage from "./pages/RegisterPage";
 
 const App = () => {
@@ -14,6 +15,7 @@ const App = () => {
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<BoardsPage />} />
         <Route path="/boards/:boardId" element={<BoardPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

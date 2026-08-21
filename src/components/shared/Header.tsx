@@ -25,7 +25,12 @@ const Header = () => {
         </Link>
 
         <div className="flex items-center gap-3">
-          {user?.email}
+          <Link
+            to="/profile"
+            className="text-sm text-zinc-600 transition hover:text-zinc-900 hover:underline focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2"
+          >
+            {user?.email}
+          </Link>
 
           <button
             type="button"
