@@ -8,7 +8,7 @@ import CreateColumnButton from "../components/board/CreateColumnButton";
 import Header from "../components/shared/Header";
 import { useColumns } from "../hooks/useColumns";
 import { useTasks } from "../hooks/useTasks";
-import { useAuth } from "../providers/AuthProvider";
+import { useAuth } from "../providers/useAuth";
 import { reorderTasks } from "../utils/reorderTasks";
 
 const BoardPage = () => {

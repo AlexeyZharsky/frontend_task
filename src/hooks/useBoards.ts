@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "../providers/AuthProvider";
+import { useAuth } from "../providers/useAuth";
 import {
   createBoard,
   deleteBoard,
@@ -38,7 +38,7 @@ export const useBoards = () => {
   }, [user]);
 
   useEffect(() => {
-    fetchBoards();
+    queueMicrotask(() => void fetchBoards());
   }, [fetchBoards]);
 
   const addBoard = async (title: string) => {

@@ -36,7 +36,7 @@ export const useColumns = (boardId: string | undefined) => {
   }, [boardId]);
 
   useEffect(() => {
-    fetchColumns();
+    queueMicrotask(() => void fetchColumns());
   }, [fetchColumns]);
 
   const addColumn = async (title: string) => {
