@@ -3,7 +3,7 @@ import {
   createTask,
   deleteTask,
   getTasks,
-  moveTask,
+  reorderTasks,
   updateTask,
 } from "../services/tasks.service";
 import type {
@@ -35,7 +35,7 @@ export const useTasks = (columnIds: string[]) => {
   }, [columnIds]);
 
   useEffect(() => {
-    void fetchTasks();
+    queueMicrotask(() => void fetchTasks());
   }, [fetchTasks]);
 
   const addTask = async (input: CreateTaskInput) => {
@@ -64,14 +64,20 @@ export const useTasks = (columnIds: string[]) => {
     );
   };
 
-  const move = async (taskId: string, columnId: string, position: number) => {
-    const updatedTask = await moveTask(taskId, columnId, position);
+  const applyLocalOrder = (nextTasks: Task[]) => {
+    setTasks(nextTasks);
+  };
 
-    setTasks((currentTasks) =>
-      currentTasks.map((task) => (task.id === taskId ? updatedTask : task)),
+  const persistOrder = async (nextTasks: Task[]) => {
+    await reorderTasks(
+      nextTasks.map((task) => ({
+        id: task.id,
+        column_id: task.column_id,
+        position: task.position,
+      })),
     );
 
-    return updatedTask;
+    setTasks(nextTasks);
   };
 
   return {
@@ -81,7 +87,8 @@ export const useTasks = (columnIds: string[]) => {
     addTask,
     editTask,
     removeTask,
-    move,
+    applyLocalOrder,
+    persistOrder,
     refetch: fetchTasks,
   };
 };

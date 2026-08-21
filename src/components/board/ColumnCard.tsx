@@ -1,8 +1,9 @@
+import { useDroppable } from "@dnd-kit/react";
 import { useState } from "react";
 import type { BoardColumn } from "../../types/column.types";
 import type { Task } from "../../types/task.types";
-import CreateTaskForm from "../task/createTaskForm";
-import TaskCard from "../task/taskCard";
+import CreateTaskForm from "../task/CreateTaskForm";
+import TaskCard from "../task/TaskCard";
 
 interface ColumnCardProps {
   column: BoardColumn;
@@ -21,6 +22,11 @@ const ColumnCard = ({
   onDelete,
   onDeleteTask,
 }: ColumnCardProps) => {
+  const { ref: droppableRef, isDropTarget } = useDroppable({
+    id: `column-${column.id}`,
+    accept: "task",
+    disabled: tasks.length > 0,
+  });
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(column.title);
   const [isSaving, setIsSaving] = useState(false);
@@ -106,19 +112,30 @@ const ColumnCard = ({
         </div>
       </div>
 
-      <div className="flex min-h-32 flex-col gap-2">
-        {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} onDelete={onDeleteTask} />
+      <CreateTaskForm onCreate={onCreateTask} />
+
+      <div
+        ref={droppableRef}
+        className={`flex min-h-32 flex-col gap-2 rounded-lg p-1 transition ${
+          isDropTarget ? "bg-zinc-200/70" : ""
+        }`}
+      >
+        {tasks.map((task, index) => (
+          <TaskCard
+            key={task.id}
+            task={task}
+            index={index}
+            columnId={column.id}
+            onDelete={onDeleteTask}
+          />
         ))}
 
         {tasks.length === 0 && (
           <div className="flex min-h-24 items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-zinc-50">
-            <p className="text-xs text-zinc-400">Нет задач</p>
+            <p className="text-xs text-zinc-400">Перетащите задачу сюда</p>
           </div>
         )}
       </div>
-
-      <CreateTaskForm onCreate={onCreateTask} />
     </section>
   );
 };

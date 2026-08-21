@@ -1,5 +1,7 @@
+import type { Json } from "../types/database.types";
 import type {
   CreateTaskInput,
+  ReorderTaskPayload,
   Task,
   UpdateTaskInput,
 } from "../types/task.types";
@@ -63,24 +65,14 @@ export const deleteTask = async (taskId: string): Promise<void> => {
   }
 };
 
-export const moveTask = async (
-  taskId: string,
-  columnId: string,
-  position: number,
-): Promise<Task> => {
-  const { data, error } = await supabase
-    .from("tasks")
-    .update({
-      column_id: columnId,
-      position,
-    })
-    .eq("id", taskId)
-    .select()
-    .single();
+export const reorderTasks = async (
+  tasks: ReorderTaskPayload[],
+): Promise<void> => {
+  const { error } = await supabase.rpc("reorder_tasks", {
+    p_tasks: tasks as unknown as Json,
+  });
 
   if (error) {
     throw error;
   }
-
-  return data;
 };

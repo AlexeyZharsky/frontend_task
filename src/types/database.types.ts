@@ -232,7 +232,12 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      reorder_tasks: {
+        Args: {
+          p_tasks: Json;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;

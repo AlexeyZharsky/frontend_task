@@ -11,3 +11,9 @@ export type UpdateTaskInput = Pick<
   TablesUpdate<"tasks">,
   "title" | "description" | "priority" | "due_date" | "assignee_id"
 >;
+
+export interface ReorderTaskPayload {
+  id: string;
+  column_id: string;
+  position: number;
+}

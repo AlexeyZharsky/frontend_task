@@ -29,7 +29,7 @@ const CreateTaskForm = ({ onCreate }: CreateTaskFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-3">
+    <form onSubmit={handleSubmit} className="mb-3">
       <input
         value={title}
         onChange={(event) => setTitle(event.target.value)}
@@ -39,15 +39,13 @@ const CreateTaskForm = ({ onCreate }: CreateTaskFormProps) => {
         className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition placeholder:text-zinc-400 focus:border-zinc-400"
       />
 
-      {title.trim() && (
-        <button
-          type="submit"
-          disabled={isCreating}
-          className="mt-2 w-full rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isCreating ? "Создание..." : "Добавить задачу"}
-        </button>
-      )}
+      <button
+        type="submit"
+        disabled={isCreating}
+        className="mt-2 w-full rounded-lg bg-zinc-200 px-3 py-2 text-sm font-medium transition hover:bg-zinc-300"
+      >
+        Добавить задачу
+      </button>
     </form>
   );
 };

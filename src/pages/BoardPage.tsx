@@ -1,3 +1,6 @@
+import { defaultPreset, Feedback } from "@dnd-kit/dom";
+import { DragDropProvider } from "@dnd-kit/react";
+import { isSortable } from "@dnd-kit/react/sortable";
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import ColumnCard from "../components/board/ColumnCard";
@@ -6,6 +9,7 @@ import Header from "../components/shared/Header";
 import { useColumns } from "../hooks/useColumns";
 import { useTasks } from "../hooks/useTasks";
 import { useAuth } from "../providers/AuthProvider";
+import { reorderTasks } from "../utils/reorderTasks";
 
 const BoardPage = () => {
   const { boardId } = useParams<{ boardId: string }>();
@@ -23,8 +27,18 @@ const BoardPage = () => {
     error: tasksError,
     addTask,
     removeTask,
+    applyLocalOrder,
+    persistOrder,
   } = useTasks(columnIds);
-
+  const dndPlugins = useMemo(
+    () => (plugins: typeof defaultPreset.plugins) =>
+      plugins.map((plugin) =>
+        plugin === Feedback
+          ? Feedback.configure({ dropAnimation: null })
+          : plugin,
+      ),
+    [],
+  );
   const isBoardLoading = isLoading || isTasksLoading;
 
   const handleRename = async (columnId: string, title: string) => {
@@ -74,44 +88,104 @@ const BoardPage = () => {
     }
   };
 
+  const handleDragEnd = async (
+    event: Parameters<
+      NonNullable<React.ComponentProps<typeof DragDropProvider>["onDragEnd"]>
+    >[0],
+  ) => {
+    if (event.canceled) {
+      return;
+    }
+
+    const { source, target } = event.operation;
+
+    if (!isSortable(source) || !target) {
+      return;
+    }
+
+    const sourceColumnId = String(source.initialGroup);
+    const targetColumnId = isSortable(target)
+      ? String(target.group)
+      : String(target.id).replace("column-", "");
+
+    if (
+      !sourceColumnId ||
+      sourceColumnId === "undefined" ||
+      !targetColumnId ||
+      targetColumnId === "undefined"
+    ) {
+      return;
+    }
+
+    const previousTasks = tasks;
+    const targetIndex = isSortable(target)
+      ? target.index
+      : previousTasks.filter((task) => task.column_id === targetColumnId)
+          .length;
+    const nextTasks = reorderTasks(
+      previousTasks,
+      String(source.id),
+      sourceColumnId,
+      targetColumnId,
+      targetIndex,
+    );
+
+    applyLocalOrder(nextTasks);
+
+    try {
+      await persistOrder(nextTasks);
+    } catch (error) {
+      console.error(error);
+      applyLocalOrder(previousTasks);
+    }
+  };
+
   return (
     <main className="flex min-h-screen flex-col bg-zinc-50">
       <Header />
 
       <div className="flex-1 overflow-x-auto mx-auto max-w-7xl px-4 py-8">
-        <div className="flex min-h-full gap-4 p-4">
-          {isBoardLoading ? (
-            <>
-              <div className="h-96 w-80 shrink-0 animate-pulse rounded-xl bg-zinc-200" />
-              <div className="h-96 w-80 shrink-0 animate-pulse rounded-xl bg-zinc-200" />
-              <div className="h-96 w-80 shrink-0 animate-pulse rounded-xl bg-zinc-200" />
-            </>
-          ) : (
-            <>
-              {columns.map((column) => (
-                <ColumnCard
-                  key={column.id}
-                  column={column}
-                  tasks={tasks.filter((task) => task.column_id === column.id)}
-                  onCreateTask={(title) =>
-                    handleCreateTask(column.id, title)
-                  }
-                  onRename={handleRename}
-                  onDelete={handleDelete}
-                  onDeleteTask={removeTask}
-                />
-              ))}
+        <DragDropProvider onDragEnd={handleDragEnd} plugins={dndPlugins}>
+          <div className="flex min-h-full gap-4 p-4">
+            {isBoardLoading ? (
+              <>
+                <div className="h-96 w-80 shrink-0 animate-pulse rounded-xl bg-zinc-200" />
+                <div className="h-96 w-80 shrink-0 animate-pulse rounded-xl bg-zinc-200" />
+                <div className="h-96 w-80 shrink-0 animate-pulse rounded-xl bg-zinc-200" />
+              </>
+            ) : (
+              <>
+                {columns.map((column) => {
+                  const columnTasks = tasks
+                    .filter((task) => task.column_id === column.id)
+                    .sort((first, second) => first.position - second.position);
 
-              <CreateColumnButton onCreate={handleCreate} />
-            </>
-          )}
+                  return (
+                    <ColumnCard
+                      key={column.id}
+                      column={column}
+                      tasks={columnTasks}
+                      onCreateTask={(title) =>
+                        handleCreateTask(column.id, title)
+                      }
+                      onRename={handleRename}
+                      onDelete={handleDelete}
+                      onDeleteTask={removeTask}
+                    />
+                  );
+                })}
 
-          {(error || tasksError) && (
-            <div className="fixed bottom-4 right-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 shadow-lg">
-              {error || tasksError}
-            </div>
-          )}
-        </div>
+                <CreateColumnButton onCreate={handleCreate} />
+              </>
+            )}
+
+            {(error || tasksError) && (
+              <div className="fixed bottom-4 right-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 shadow-lg">
+                {error || tasksError}
+              </div>
+            )}
+          </div>
+        </DragDropProvider>
       </div>
     </main>
   );
