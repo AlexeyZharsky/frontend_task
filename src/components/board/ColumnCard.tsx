@@ -1,13 +1,26 @@
 import { useState } from "react";
 import type { BoardColumn } from "../../types/column.types";
+import type { Task } from "../../types/task.types";
+import CreateTaskForm from "../task/createTaskForm";
+import TaskCard from "../task/taskCard";
 
 interface ColumnCardProps {
   column: BoardColumn;
+  tasks: Task[];
+  onCreateTask: (title: string) => Promise<void>;
   onRename: (columnId: string, title: string) => Promise<void>;
   onDelete: (columnId: string) => Promise<void>;
+  onDeleteTask: (taskId: string) => Promise<void>;
 }
 
-const ColumnCard = ({ column, onRename, onDelete }: ColumnCardProps) => {
+const ColumnCard = ({
+  column,
+  tasks,
+  onCreateTask,
+  onRename,
+  onDelete,
+  onDeleteTask,
+}: ColumnCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(column.title);
   const [isSaving, setIsSaving] = useState(false);
@@ -93,11 +106,19 @@ const ColumnCard = ({ column, onRename, onDelete }: ColumnCardProps) => {
         </div>
       </div>
 
-      <div className="min-h-32 rounded-lg border border-dashed border-zinc-300 bg-zinc-50 p-3">
-        <p className="text-center text-xs text-zinc-400">
-          Задачи появятся здесь
-        </p>
+      <div className="flex min-h-32 flex-col gap-2">
+        {tasks.map((task) => (
+          <TaskCard key={task.id} task={task} onDelete={onDeleteTask} />
+        ))}
+
+        {tasks.length === 0 && (
+          <div className="flex min-h-24 items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-zinc-50">
+            <p className="text-xs text-zinc-400">Нет задач</p>
+          </div>
+        )}
       </div>
+
+      <CreateTaskForm onCreate={onCreateTask} />
     </section>
   );
 };

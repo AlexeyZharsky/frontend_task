@@ -1,14 +1,31 @@
+import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import ColumnCard from "../components/board/ColumnCard";
 import CreateColumnButton from "../components/board/CreateColumnButton";
 import Header from "../components/shared/Header";
 import { useColumns } from "../hooks/useColumns";
+import { useTasks } from "../hooks/useTasks";
+import { useAuth } from "../providers/AuthProvider";
 
 const BoardPage = () => {
   const { boardId } = useParams<{ boardId: string }>();
+  const { user } = useAuth();
 
   const { columns, isLoading, error, addColumn, renameColumn, removeColumn } =
     useColumns(boardId);
+  const columnIds = useMemo(
+    () => columns.map((column) => column.id),
+    [columns],
+  );
+  const {
+    tasks,
+    isLoading: isTasksLoading,
+    error: tasksError,
+    addTask,
+    removeTask,
+  } = useTasks(columnIds);
+
+  const isBoardLoading = isLoading || isTasksLoading;
 
   const handleRename = async (columnId: string, title: string) => {
     try {
@@ -34,13 +51,36 @@ const BoardPage = () => {
     }
   };
 
+  const handleCreateTask = async (columnId: string, title: string) => {
+    if (!user) {
+      return;
+    }
+
+    try {
+      const columnTasks = tasks.filter((task) => task.column_id === columnId);
+      const position =
+        columnTasks.length > 0
+          ? Math.max(...columnTasks.map((task) => task.position)) + 1
+          : 0;
+
+      await addTask({
+        column_id: columnId,
+        title,
+        position,
+        created_by: user.id,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <main className="flex min-h-screen flex-col bg-zinc-50">
       <Header />
 
       <div className="flex-1 overflow-x-auto mx-auto max-w-7xl px-4 py-8">
         <div className="flex min-h-full gap-4 p-4">
-          {isLoading ? (
+          {isBoardLoading ? (
             <>
               <div className="h-96 w-80 shrink-0 animate-pulse rounded-xl bg-zinc-200" />
               <div className="h-96 w-80 shrink-0 animate-pulse rounded-xl bg-zinc-200" />
@@ -52,8 +92,13 @@ const BoardPage = () => {
                 <ColumnCard
                   key={column.id}
                   column={column}
+                  tasks={tasks.filter((task) => task.column_id === column.id)}
+                  onCreateTask={(title) =>
+                    handleCreateTask(column.id, title)
+                  }
                   onRename={handleRename}
                   onDelete={handleDelete}
+                  onDeleteTask={removeTask}
                 />
               ))}
 
@@ -61,9 +106,9 @@ const BoardPage = () => {
             </>
           )}
 
-          {error && (
+          {(error || tasksError) && (
             <div className="fixed bottom-4 right-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 shadow-lg">
-              {error}
+              {error || tasksError}
             </div>
           )}
         </div>
